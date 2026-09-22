@@ -634,24 +634,24 @@ const PIKET = {
 const IMAGE_MAP = {
   // Tinggal isi link foto/GIF/video di antara tanda kutip "" masing-masing mapel di bawah.
   // Upload di imgbb.com (foto/GIF) atau GitHub repo kamu sendiri (kalau video .mp4).
-  "Bahasa Jawa": "",
-  "Matematika": "",
-  "Seni Budaya": "",
-  "Sosiologi": "",
-  "Bahasa Indonesia": "",
-  "PJOK": "",
-  "Biologi": "",
-  "Pendidikan Agama": "",
-  "Informatika": "",
-  "PKn": "",
-  "Sejarah": "",
-  "Bahasa Inggris": "",
-  "Bimbingan Konseling": "",
-  "Geografi": "",
-  "Kimia": "",
-  "Fisika": "",
-  "Ekonomi": "",
-  "Jam Kosong": "",
+  "Bahasa Jawa": "https://i.ibb.co/b5xWKjDD/IMG-20260921-WA0029.jpg",
+  "Matematika": "https://i.ibb.co/PsFMSpd9/motion-photo-2911038466590961976.jpg",
+  "Seni Budaya": "https://i.ibb.co/BJrTzX1/IMG-20260920-WA0006.jpg",
+  "Sosiologi": "https://i.ibb.co/b5xWKjDD/IMG-20260921-WA0029.jpg",
+  "Bahasa Indonesia": "https://i.ibb.co/PsFMSpd9/motion-photo-2911038466590961976.jpg",
+  "PJOK": "https://i.ibb.co/BJrTzX1/IMG-20260920-WA0006.jpg",
+  "Biologi": "https://i.ibb.co/b5xWKjDD/IMG-20260921-WA0029.jpg",
+  "Pendidikan Agama": "https://i.ibb.co/PsFMSpd9/motion-photo-2911038466590961976.jpg",
+  "Informatika": "https://i.ibb.co/BJrTzX1/IMG-20260920-WA0006.jpg",
+  "PKn": "https://i.ibb.co/b5xWKjDD/IMG-20260921-WA0029.jpg",
+  "Sejarah": "https://i.ibb.co/PsFMSpd9/motion-photo-2911038466590961976.jpg",
+  "Bahasa Inggris": "https://i.ibb.co/BJrTzX1/IMG-20260920-WA0006.jpg",
+  "Bimbingan Konseling": "https://i.ibb.co/b5xWKjDD/IMG-20260921-WA0029.jpg",
+  "Geografi": "https://i.ibb.co/PsFMSpd9/motion-photo-2911038466590961976.jpg",
+  "Kimia": "https://i.ibb.co/BJrTzX1/IMG-20260920-WA0006.jpg",
+  "Fisika": "https://i.ibb.co/b5xWKjDD/IMG-20260921-WA0029.jpg",
+  "Ekonomi": "https://i.ibb.co/PsFMSpd9/motion-photo-2911038466590961976.jpg",
+  "Jam Kosong": "https://i.ibb.co/BJrTzX1/IMG-20260920-WA0006.jpg",
 };
 
 // placeholder ilustrasi default (garis, gaya sketsa) kalau IMAGE_MAP kosong
@@ -713,11 +713,11 @@ themeBtn.addEventListener('click', ()=>{
 // ================= BACKGROUND VIDEO (beda tiap tema) + MUSIK TERPISAH =================
 // Isi salah satu / keduanya. Video SELALU hening (cuma visual);
 // kalau mau ada musik, isi AUDIO_SRC terpisah di bawahnya.
-const VIDEO_SRC_DARK = "";  // video buat mode gelap, contoh: "https://username.github.io/repo/video/dark.mp4"
-const VIDEO_SRC_LIGHT = ""; // video buat mode terang, contoh: "https://username.github.io/repo/video/light.mp4"
+const VIDEO_SRC_DARK = "https://fluently-find.github.io/X12/bg1.mp4";  // video buat mode gelap, contoh: "https://username.github.io/repo/video/dark.mp4"
+const VIDEO_SRC_LIGHT = "https://fluently-find.github.io/X12/bg.mp4"; // video buat mode terang, contoh: "https://username.github.io/repo/video/light.mp4"
 
 // Musik latar terpisah dari video (looping). Kosongkan kalau tidak ada.
-const AUDIO_SRC = ""; // contoh: "https://username.github.io/repo/audio/musik.mp3"
+const AUDIO_SRC = "https://fluently-find.github.io/X12/msc.mp3"; // contoh: "https://username.github.io/repo/audio/musik.mp3"
 
 (function initBgVideo(){
   if(!VIDEO_SRC_DARK && !VIDEO_SRC_LIGHT) return; // dua-duanya kosong -> tetap pakai gradasi
