@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Absensi — euonia X12</title>
+<style>
+  :root{
+    --ink:#0B1220;
+    --ink-dim: rgba(11,18,32,0.6);
+    --glass-bg: rgba(255,255,255,0.35);
+    --glass-border: rgba(255,255,255,0.55);
+    --glass-shadow: 0 8px 32px rgba(15,25,50,0.18);
+    --accent:#0A84FF;
+    --ring-good:#30D158;
+    --ring-mid:#FF9F0A;
+    --ring-low:#FF453A;
+  }
+  :root[data-theme="dark"]{
+    --ink:#F2F4F8;
+    --ink-dim: rgba(242,244,248,0.62);
+    --glass-bg: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.18);
+    --glass-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; overscroll-behavior-y:none;}
+  body{
+    margin:0;
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+    color:var(--ink);
+    min-height:100vh; min-height:100dvh;
+    padding:20px 16px 50px;
+    position:relative;
+    overflow-x:hidden;
+    background:#eef1f5;
+    transition: background 0.4s ease, color 0.3s ease;
+  }
+  :root[data-theme="dark"] body{ background:#05070C; }
+
+  .bg-video{
+    position:fixed; inset:0; width:100%; height:100vh; height:100dvh;
+    object-fit:cover; z-index:-2; pointer-events:none;
+  }
+  .bg-video-overlay{
+    position:fixed; inset:0; width:100%; height:100vh; height:100dvh; z-index:-1; pointer-events:none;
+    background:rgba(0,0,0,0.22);
+  }
+  :root[data-theme="dark"] .bg-video-overlay{ background:rgba(0,0,0,0.4); }
+
+  .wrap{max-width:600px;margin:0 auto; position:relative; z-index:1;}
+
+  .glass{
+    background:var(--glass-bg);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(28px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow);
+  }
+
+  /* ---------- top bar ---------- */
+  .topline{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .icon-btn{
+    flex:0 0 auto; width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:1.05rem; color:var(--ink); text-decoration:none;
+  }
+  .icon-btn:active{ transform:scale(0.92); }
+  .topline-title{ flex:1; font-size:1.15rem; font-weight:700; letter-spacing:-0.01em; }
+
+  /* ---------- date nav ---------- */
+  .date-nav{
+    display:flex; align-items:center; justify-content:space-between;
+    border-radius:18px; padding:10px 8px; margin-bottom:14px;
+  }
+  .date-nav .icon-btn.disabled{ opacity:0.3; pointer-events:none; }
+  .date-label{ text-align:center; flex:1; }
+  .date-label .d1{ font-size:0.92rem; font-weight:700; }
+  .date-label .d2{ font-size:0.72rem; color:var(--ink-dim); font-weight:600; margin-top:1px; }
+  .date-today-btn{
+    font-size:0.68rem; font-weight:700; color:var(--accent); cursor:pointer;
+    text-align:center; margin-top:2px; display:block;
+  }
+
+  /* ---------- recap ---------- */
+  .recap{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+  .recap-stat{ border-radius:14px; padding:10px 6px; text-align:center; }
+  .recap-stat .n{ font-size:1.25rem; font-weight:700; line-height:1.1; }
+  .recap-stat .l{ font-size:0.62rem; font-weight:700; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.03em; margin-top:2px; }
+  .recap-stat.hadir .n{ color:var(--ring-good); }
+  .recap-stat.sakit .n{ color:var(--ring-mid); }
+  .recap-stat.izin .n{ color:var(--accent); }
+  .recap-stat.alpa .n{ color:var(--ring-low); }
+
+  /* ---------- toolbar ---------- */
+  .toolbar{ display:flex; gap:8px; margin-bottom:10px; }
+  .search-input{
+    flex:1; border-radius:14px; padding:10px 14px; border:1px solid var(--glass-border);
+    background:var(--glass-bg); color:var(--ink); font-size:0.88rem; font-family:inherit;
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  }
+  .search-input::placeholder{ color:var(--ink-dim); }
+  .bulk-btn{
+    flex:0 0 auto; border-radius:14px; padding:10px 14px; font-size:0.78rem; font-weight:700;
+    border:1px solid var(--glass-border); background:var(--glass-bg); color:var(--ink);
+    cursor:pointer; font-family:inherit; white-space:nowrap;
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  }
+  .bulk-btn:active{ transform:scale(0.96); }
+
+  /* ---------- list ---------- */
+  .list-card{ border-radius:20px; padding:6px; margin-bottom:14px; }
+  .absen-row{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 10px; border-radius:14px;
+  }
+  .absen-row + .absen-row{ border-top:1px solid var(--glass-border); }
+  .absen-row .nm{ font-size:0.87rem; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .absen-toggles{ display:flex; gap:4px; flex:0 0 auto; }
+  .absen-btn{
+    width:27px; height:27px; border-radius:8px; border:1px solid var(--glass-border);
+    background:rgba(255,255,255,0.3); color:var(--ink-dim);
+    font-size:0.68rem; font-weight:700; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; justify-content:center;
+  }
+  :root[data-theme="dark"] .absen-btn{ background:rgba(255,255,255,0.08); }
+  .absen-btn.active[data-s="hadir"]{ background:var(--ring-good); color:#fff; border-color:transparent; }
+  .absen-btn.active[data-s="sakit"]{ background:var(--ring-mid); color:#fff; border-color:transparent; }
+  .absen-btn.active[data-s="izin"]{ background:var(--accent); color:#fff; border-color:transparent; }
+  .absen-btn.active[data-s="alpa"]{ background:var(--ring-low); color:#fff; border-color:transparent; }
+  .list-empty{ font-size:0.82rem; color:var(--ink-dim); text-align:center; padding:18px 8px; }
+
+  .sync-note{ font-size:0.72rem; color:var(--ink-dim); font-weight:600; text-align:center; margin-bottom:18px; }
+
+  /* ---------- history ---------- */
+  .section-title{ font-size:0.95rem; font-weight:700; margin-bottom:10px; }
+  .history-card{ border-radius:20px; padding:6px 10px; }
+  .hist-item{ padding:10px 2px; cursor:pointer; }
+  .hist-item + .hist-item{ border-top:1px solid var(--glass-border); }
+  .hist-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .hist-date{ font-size:0.84rem; font-weight:600; }
+  .hist-counts{ font-size:0.72rem; color:var(--ink-dim); font-weight:600; white-space:nowrap; }
+  .hist-empty, .hist-loading{ font-size:0.82rem; color:var(--ink-dim); text-align:center; padding:16px 8px; }
+
+  /* ---------- lock screen ---------- */
+  .lock-screen{
+    position:fixed; inset:0; z-index:200;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .lock-card{
+    max-width:320px; width:100%; border-radius:22px; padding:28px 24px;
+    text-align:center;
+  }
+  .lock-ico{ font-size:2rem; margin-bottom:10px; }
+  .lock-title{ font-size:1.05rem; font-weight:700; margin-bottom:6px; }
+  .lock-sub{ font-size:0.82rem; color:var(--ink-dim); margin-bottom:18px; line-height:1.5; }
+  .lock-input{
+    width:100%; border-radius:12px; padding:12px 14px; margin-bottom:10px;
+    border:1px solid var(--glass-border); background:rgba(255,255,255,0.5); color:var(--ink);
+    font-size:0.95rem; font-family:inherit; text-align:center;
+  }
+  :root[data-theme="dark"] .lock-input{ background:rgba(255,255,255,0.1); }
+  .lock-input::placeholder{ color:var(--ink-dim); }
+  .lock-error{ font-size:0.78rem; color:#FF453A; font-weight:600; margin-bottom:10px; display:none; }
+  .lock-error.show{ display:block; }
+  .lock-btn{
+    width:100%; border-radius:12px; padding:12px; border:none;
+    background:var(--accent); color:#fff; font-size:0.92rem; font-weight:700;
+    cursor:pointer; font-family:inherit;
+  }
+  .lock-btn:active{ transform:scale(0.97); }
+</style>
+</head>
+<body>
+<video id="bgVideo" class="bg-video" autoplay muted loop playsinline webkit-playsinline="true" style="display:none;">
+  <source id="bgVideoSource" src="" type="video/mp4">
+</video>
+<div class="bg-video-overlay" id="bgVideoOverlay" style="display:none;"></div>
+
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card glass">
+    <div class="lock-ico">🔒</div>
+    <div class="lock-title">Khusus Sekertaris Kelas</div>
+    <div class="lock-sub">Masukkan password buat buka halaman absensi.</div>
+    <input class="lock-input" id="lockInput" type="password" placeholder="Password" autocomplete="off">
+    <div class="lock-error" id="lockError">Password salah, coba lagi.</div>
+    <button class="lock-btn" id="lockBtn">Buka</button>
+  </div>
+</div>
+
+<div class="wrap" id="mainWrap" style="display:none;">
+
+  <div class="topline">
+    <a class="icon-btn glass" href="index.html" title="Kembali">←</a>
+    <div class="topline-title">Absensi</div>
+    <div class="icon-btn glass" id="themeBtn" title="Ganti tema">🌙</div>
+  </div>
+
+  <div class="date-nav glass">
+    <div class="icon-btn" id="prevDay">‹</div>
+    <div class="date-label">
+      <div class="d1" id="dateD1">-</div>
+      <div class="d2" id="dateD2">-</div>
+      <span class="date-today-btn" id="gotoToday" style="display:none;">kembali ke hari ini</span>
+    </div>
+    <div class="icon-btn" id="nextDay">›</div>
+  </div>
+
+  <div class="recap">
+    <div class="recap-stat glass hadir"><div class="n" id="cHadir">0</div><div class="l">Hadir</div></div>
+    <div class="recap-stat glass sakit"><div class="n" id="cSakit">0</div><div class="l">Sakit</div></div>
+    <div class="recap-stat glass izin"><div class="n" id="cIzin">0</div><div class="l">Izin</div></div>
+    <div class="recap-stat glass alpa"><div class="n" id="cAlpa">0</div><div class="l">Alpa</div></div>
+  </div>
+
+  <div class="toolbar">
+    <input class="search-input glass" id="searchInput" type="text" placeholder="Cari nama murid…">
+    <button class="bulk-btn glass" id="allHadirBtn">Semua Hadir</button>
+  </div>
+
+  <div class="list-card glass">
+    <div id="absenList"></div>
+  </div>
+  <div class="sync-note" id="syncNote">memuat…</div>
+
+  <div class="section-title">Riwayat</div>
+  <div class="history-card glass">
+    <div id="historyList"><div class="hist-loading">Memuat riwayat…</div></div>
+  </div>
+
+</div>
+
+<script>
+// ================= PASSWORD SEKERTARIS KELAS =================
+// Ganti passwordnya di sini kalau mau diubah.
+const ABSENSI_PASSWORD = "SEKERTARISKELAS";
+
+(function initLock(){
+  const lockScreen = document.getElementById('lockScreen');
+  const mainWrap = document.getElementById('mainWrap');
+  const input = document.getElementById('lockInput');
+  const errorEl = document.getElementById('lockError');
+  const btn = document.getElementById('lockBtn');
+
+  function unlock(){
+    lockScreen.style.display = 'none';
+    mainWrap.style.display = 'block';
+    try{ sessionStorage.setItem('absensi-unlocked', 'yes'); }catch(e){}
+  }
+
+  function tryUnlock(){
+    if(input.value === ABSENSI_PASSWORD){
+      unlock();
+    } else {
+      errorEl.classList.add('show');
+      input.value = "";
+      input.focus();
+    }
+  }
+
+  // kalau sudah pernah berhasil buka di tab/sesi ini, tidak usah tanya lagi
+  let already = false;
+  try{ already = sessionStorage.getItem('absensi-unlocked') === 'yes'; }catch(e){}
+  if(already){ unlock(); }
+
+  btn.addEventListener('click', tryUnlock);
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') tryUnlock();
+    errorEl.classList.remove('show');
+  });
+})();
+
+// ================= ROSTER (35 murid) =================
+const ROSTER = [
+  "Fandi","Aisyah","Amar","Anasa","Eca","Dewi","Dian",
+  "Apan","Ali","Amel","Bintang","Dewa","Mada","Yola",
+  "Farid","Kara","Wili Salim","Angga","Fino","Nabila","Qysa",
+  "Fina","Nisa","Lida","Lana","Revando","Nada","Fendi",
+  "Shiva","Tera","Wisnu","Nita","Silvi","Ulfa","Yofi",
+];
+const STATUS_LIST = [
+  { key:"hadir", label:"H", full:"Hadir" },
+  { key:"sakit", label:"S", full:"Sakit" },
+  { key:"izin",  label:"I", full:"Izin" },
+  { key:"alpa",  label:"A", full:"Alpa" },
+];
+const SEKOLAH_HARI = [1,2,3,4,5]; // 0=Minggu ... 6=Sabtu -> sekolah Senin(1)-Jumat(5)
+
+// ================= TEMA ====================
+const root = document.documentElement;
+const themeBtn = document.getElementById('themeBtn');
+function applyTheme(mode){
+  root.setAttribute('data-theme', mode);
+  themeBtn.textContent = mode === 'light' ? '☀️' : '🌙';
+  try{ localStorage.setItem('kelas-theme', mode); }catch(e){}
+}
+(function initTheme(){
+  let saved = null;
+  try{ saved = localStorage.getItem('kelas-theme'); }catch(e){}
+  if(saved === 'light' || saved === 'dark'){ applyTheme(saved); }
+  else {
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(prefersLight ? 'light' : 'dark');
+  }
+})();
+themeBtn.addEventListener('click', ()=>{
+  const current = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  applyTheme(current === 'light' ? 'dark' : 'light');
+});
+
+// ================= BACKGROUND VIDEO (isi sama kayak di index.html) =================
+const VIDEO_SRC_DARK = "https://fluently-find.github.io/X12/bg1.mp4";
+const VIDEO_SRC_LIGHT = "https://fluently-find.github.io/X12/bg.mp4";
+(function initBgVideo(){
+  if(!VIDEO_SRC_DARK && !VIDEO_SRC_LIGHT) return;
+  const video = document.getElementById('bgVideo');
+  const source = document.getElementById('bgVideoSource');
+  const overlay = document.getElementById('bgVideoOverlay');
+  video.muted = true;
+  video.style.display = 'block';
+  overlay.style.display = 'block';
+  function srcForTheme(){
+    const mode = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    return mode === 'light' ? (VIDEO_SRC_LIGHT || VIDEO_SRC_DARK) : (VIDEO_SRC_DARK || VIDEO_SRC_LIGHT);
+  }
+  function loadForTheme(){
+    const want = srcForTheme();
+    if(!want || source.src === want) return;
+    source.src = want; video.load();
+    video.play().catch(()=>{});
+  }
+  loadForTheme();
+  new MutationObserver(loadForTheme).observe(root, { attributes:true, attributeFilter:['data-theme'] });
+})();
+
+// ================= HELPERS TANGGAL =================
+function pad(n){ return n.toString().padStart(2,"0"); }
+function toKey(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function fromKey(key){ const [y,m,d]=key.split("-").map(Number); return new Date(y,m-1,d); }
+function humanDate(dateStr){
+  const dt = fromKey(dateStr);
+  return dt.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+function shortDate(dateStr){
+  const dt = fromKey(dateStr);
+  return dt.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+function shiftSchoolDay(dateStr, dir){ // dir: +1 / -1, lompat akhir pekan
+  let dt = fromKey(dateStr);
+  do{ dt.setDate(dt.getDate()+dir); } while(!SEKOLAH_HARI.includes(dt.getDay()));
+  return toKey(dt);
+}
+function todayKey(){ return toKey(new Date()); }
+
+let currentDate = todayKey();
+let unsubCurrent = null;
+let currentEntries = {};
+let searchTerm = "";
+
+// ================= BACKEND: db (kalau ada) + fallback localStorage per perangkat =================
+let dbApi = null, dbTried = false;
+async function ensureDb(){
+  if(dbTried) return dbApi;
+  dbTried = true;
+  try{
+    if(window.claude && typeof window.claude.use === 'function'){
+      dbApi = await window.claude.use('db');
+    }
+  }catch(e){ dbApi = null; }
+  return dbApi;
+}
+function lsGet(dateStr){
+  try{ const raw = localStorage.getItem('absen-'+dateStr); return raw ? JSON.parse(raw) : {}; }
+  catch(e){ return {}; }
+}
+function lsSet(dateStr, entries){
+  try{ localStorage.setItem('absen-'+dateStr, JSON.stringify(entries)); }catch(e){}
+}
+function lsAllDates(){
+  const out = [];
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf('absen-')===0) out.push(k.slice(6));
+    }
+  }catch(e){}
+  return out.sort().reverse();
+}
+
+async function setStatus(dateStr, name, status){
+  const db = await ensureDb();
+  if(db){
+    try{
+      const ref = db.collection('attendance').doc(dateStr);
+      const snap = await ref.get();
+      const nowIso = new Date().toISOString();
+      if(!snap.exists) await ref.set({ date:dateStr, entries:{}, updatedAt: nowIso });
+      await ref.update({ entries:{ [name]: status }, updatedAt: nowIso });
+      return;
+    }catch(e){ /* fallback di bawah */ }
+  }
+  const cur = lsGet(dateStr);
+  cur[name] = status;
+  lsSet(dateStr, cur);
+  if(dateStr === currentDate){ currentEntries = cur; renderList(); renderRecap(); }
+}
+
+function subscribeCurrent(){
+  if(unsubCurrent){ try{ unsubCurrent(); }catch(e){} unsubCurrent = null; }
+  ensureDb().then(db=>{
+    if(db){
+      document.getElementById('syncNote').textContent = "tersimpan bersama (satu organisasi Claude)";
+      const ref = db.collection('attendance').doc(currentDate);
+      unsubCurrent = ref.onSnapshot(snap=>{
+        currentEntries = (snap.exists && snap.data().entries) ? snap.data().entries : {};
+        renderList(); renderRecap();
+      }, ()=>{
+        currentEntries = lsGet(currentDate);
+        renderList(); renderRecap();
+      });
+    } else {
+      document.getElementById('syncNote').textContent = "tersimpan di perangkat ini saja";
+      currentEntries = lsGet(currentDate);
+      renderList(); renderRecap();
+    }
+  });
+}
+
+function statusOf(name){ return currentEntries[name] || "hadir"; }
+
+// ================= RENDER =================
+function renderDateNav(){
+  document.getElementById('dateD1').textContent = shortDate(currentDate);
+  document.getElementById('dateD2').textContent = fromKey(currentDate).toLocaleDateString('id-ID',{weekday:'long'});
+  const isToday = currentDate === todayKey();
+  document.getElementById('nextDay').classList.toggle('disabled', isToday);
+  document.getElementById('gotoToday').style.display = isToday ? 'none' : 'block';
+}
+
+function renderRecap(){
+  const counts = { hadir:0, sakit:0, izin:0, alpa:0 };
+  ROSTER.forEach(n=>{ counts[statusOf(n)]++; });
+  document.getElementById('cHadir').textContent = counts.hadir;
+  document.getElementById('cSakit').textContent = counts.sakit;
+  document.getElementById('cIzin').textContent = counts.izin;
+  document.getElementById('cAlpa').textContent = counts.alpa;
+}
+
+function renderList(){
+  const list = document.getElementById('absenList');
+  const names = ROSTER.filter(n=> n.toLowerCase().includes(searchTerm.toLowerCase()));
+  if(names.length === 0){
+    list.innerHTML = `<div class="list-empty">Tidak ada nama yang cocok.</div>`;
+    return;
+  }
+  list.innerHTML = names.map(name=>{
+    const st = statusOf(name);
+    const btns = STATUS_LIST.map(s=>
+      `<button class="absen-btn${st===s.key?' active':''}" data-s="${s.key}" data-name="${name}">${s.label}</button>`
+    ).join("");
+    return `<div class="absen-row"><span class="nm">${name}</span><div class="absen-toggles">${btns}</div></div>`;
+  }).join("");
+  list.querySelectorAll('.absen-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setStatus(currentDate, btn.getAttribute('data-name'), btn.getAttribute('data-s'));
+    });
+  });
+}
+
+async function loadHistory(){
+  const wrap = document.getElementById('historyList');
+  wrap.innerHTML = `<div class="hist-loading">Memuat riwayat…</div>`;
+  const db = await ensureDb();
+  let items = [];
+  if(db){
+    try{
+      const snap = await db.collection('attendance').orderBy('date','desc').limit(30).get();
+      items = snap.docs.map(d=>d.data()).filter(Boolean);
+    }catch(e){ items = []; }
+  } else {
+    items = lsAllDates().slice(0,30).map(d=>({date:d, entries:lsGet(d)}));
+  }
+  items = items.filter(it=>it.date !== currentDate);
+
+  if(items.length === 0){
+    wrap.innerHTML = `<div class="hist-empty">Belum ada riwayat lain.</div>`;
+    return;
+  }
+  wrap.innerHTML = items.map(it=>{
+    const entries = it.entries || {};
+    const counts = { hadir:0, sakit:0, izin:0, alpa:0 };
+    ROSTER.forEach(n=>{ counts[entries[n] || "hadir"]++; });
+    return `
+      <div class="hist-item" data-date="${it.date}">
+        <div class="hist-top">
+          <span class="hist-date">${humanDate(it.date)}</span>
+          <span class="hist-counts">H${counts.hadir} · S${counts.sakit} · I${counts.izin} · A${counts.alpa}</span>
+        </div>
+      </div>`;
+  }).join("");
+  wrap.querySelectorAll('.hist-item').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      goToDate(el.getAttribute('data-date'));
+      window.scrollTo({ top:0, behavior:'smooth' });
+    });
+  });
+}
+
+function goToDate(dateStr){
+  currentDate = dateStr;
+  renderDateNav();
+  subscribeCurrent();
+  loadHistory();
+}
+
+// ================= EVENTS =================
+document.getElementById('prevDay').addEventListener('click', ()=> goToDate(shiftSchoolDay(currentDate,-1)));
+document.getElementById('nextDay').addEventListener('click', ()=>{
+  if(currentDate === todayKey()) return;
+  goToDate(shiftSchoolDay(currentDate,1));
+});
+document.getElementById('gotoToday').addEventListener('click', ()=> goToDate(todayKey()));
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  renderList();
+});
+document.getElementById('allHadirBtn').addEventListener('click', ()=>{
+  ROSTER.forEach(n=> setStatus(currentDate, n, 'hadir'));
+});
+
+// ================= INIT =================
+renderDateNav();
+subscribeCurrent();
+loadHistory();
+</script>
+</body>
+</html>

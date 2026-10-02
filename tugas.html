@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tugas — euonia X12</title>
+<style>
+  :root{
+    --ink:#0B1220;
+    --ink-dim: rgba(11,18,32,0.6);
+    --glass-bg: rgba(255,255,255,0.35);
+    --glass-border: rgba(255,255,255,0.55);
+    --glass-shadow: 0 8px 32px rgba(15,25,50,0.18);
+    --accent:#0A84FF;
+  }
+  :root[data-theme="dark"]{
+    --ink:#F2F4F8;
+    --ink-dim: rgba(242,244,248,0.62);
+    --glass-bg: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.18);
+    --glass-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; overscroll-behavior-y:none;}
+  body{
+    margin:0;
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+    color:var(--ink);
+    min-height:100vh; min-height:100dvh;
+    padding:20px 16px 50px;
+    position:relative;
+    overflow-x:hidden;
+    background:#eef1f5;
+    transition: background 0.4s ease, color 0.3s ease;
+  }
+  :root[data-theme="dark"] body{ background:#05070C; }
+
+  .bg-video{
+    position:fixed; inset:0; width:100%; height:100vh; height:100dvh;
+    object-fit:cover; z-index:-2; pointer-events:none;
+  }
+  .bg-video-overlay{
+    position:fixed; inset:0; width:100%; height:100vh; height:100dvh; z-index:-1; pointer-events:none;
+    background:rgba(0,0,0,0.22);
+  }
+  :root[data-theme="dark"] .bg-video-overlay{ background:rgba(0,0,0,0.4); }
+
+  .wrap{max-width:640px;margin:0 auto; position:relative; z-index:1;}
+
+  .glass{
+    background:var(--glass-bg);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(28px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow);
+  }
+
+  /* ---------- top bar ---------- */
+  .topline{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .icon-btn{
+    flex:0 0 auto; width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:1.05rem; color:var(--ink); text-decoration:none;
+  }
+  .icon-btn:active{ transform:scale(0.92); }
+  .topline-title{ flex:1; font-size:1.15rem; font-weight:700; letter-spacing:-0.01em; }
+
+  .search-input{
+    width:100%; border-radius:14px; padding:11px 14px; margin-bottom:14px;
+    border:1px solid var(--glass-border); background:var(--glass-bg); color:var(--ink);
+    font-size:0.88rem; font-family:inherit;
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  }
+  .search-input::placeholder{ color:var(--ink-dim); }
+
+  /* ---------- grid folder mapel ---------- */
+  .folder-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+  @media (min-width:480px){ .folder-grid{ grid-template-columns:repeat(3, 1fr); } }
+  .folder-card{
+    border-radius:18px; padding:14px; cursor:pointer;
+    display:flex; flex-direction:column; gap:10px; text-align:left;
+  }
+  .folder-card:active{ transform:scale(0.97); }
+  .folder-ico{
+    width:34px; height:34px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(10,132,255,0.15); color:var(--accent);
+  }
+  .folder-ico svg{ width:18px; height:18px; }
+  .folder-name{ font-size:0.86rem; font-weight:700; line-height:1.2; }
+  .folder-count{ font-size:0.72rem; color:var(--ink-dim); font-weight:600; }
+  .folder-empty{ grid-column:1/-1; text-align:center; color:var(--ink-dim); font-size:0.85rem; padding:30px 10px; }
+
+  /* ---------- daftar file dalam satu mapel ---------- */
+  .subject-header{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .subject-header .title{ font-size:1.15rem; font-weight:700; flex:1; min-width:0; }
+
+  .file-list{ display:flex; flex-direction:column; gap:8px; }
+  .file-item{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 14px; border-radius:16px;
+    text-decoration:none; color:var(--ink);
+  }
+  .file-item:active{ transform:scale(0.98); }
+  .file-item .ico{
+    flex:0 0 auto; width:36px; height:36px; border-radius:11px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(10,132,255,0.15); color:var(--accent);
+  }
+  .file-item .ico svg{ width:18px; height:18px; }
+  .file-item .tx{ min-width:0; flex:1; }
+  .file-item .t1{ font-size:0.9rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file-item .t2{ font-size:0.74rem; color:var(--ink-dim); margin-top:2px; }
+  .file-item .chev{ flex:0 0 auto; color:var(--ink-dim); font-size:0.9rem; }
+  .file-empty{ text-align:center; color:var(--ink-dim); font-size:0.85rem; padding:40px 10px; }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<video id="bgVideo" class="bg-video" autoplay muted loop playsinline webkit-playsinline="true" style="display:none;">
+  <source id="bgVideoSource" src="" type="video/mp4">
+</video>
+<div class="bg-video-overlay" id="bgVideoOverlay" style="display:none;"></div>
+
+<div class="wrap">
+
+  <div class="topline">
+    <a class="icon-btn glass" href="index.html" title="Kembali">←</a>
+    <div class="topline-title">Tugas &amp; File Belajar</div>
+    <div class="icon-btn glass" id="themeBtn" title="Ganti tema">🌙</div>
+  </div>
+
+  <!-- TAMPILAN 1: grid folder per mapel -->
+  <div id="folderView">
+    <input class="search-input glass" id="searchInput" type="text" placeholder="Cari mata pelajaran…">
+    <div class="folder-grid" id="folderGrid"></div>
+  </div>
+
+  <!-- TAMPILAN 2: daftar file dalam satu mapel -->
+  <div id="fileView" class="hidden">
+    <div class="subject-header">
+      <div class="icon-btn glass" id="backToFolders">←</div>
+      <div class="title" id="subjectTitle">-</div>
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+</div>
+
+<script>
+// ================= DATA TUGAS (isi link file di sini) =================
+// Nama mapel harus persis sama kayak di index.html (SCHEDULE/IMAGE_MAP).
+// Format tiap file: { judul: "Nama filenya", link: "https://..." }
+// Bisa link dari file yang kamu upload sendiri ke GitHub repo ini (paling simpel,
+// tinggal Add file > Upload files, lalu linknya https://username.github.io/repo/nama-file.pdf)
+// atau dari Google Drive (ingat set sharing "Anyone with the link").
+const TUGAS_FILES = {
+  "Bahasa Jawa": [],
+  "Matematika": [
+    // { judul: "Rangkuman Bab 3 - Eksponen", link: "https://username.github.io/repo/tugas/matematika-bab3.pdf" },
+  ],
+  "Seni Budaya": [],
+  "Sosiologi": [],
+  "Bahasa Indonesia": [],
+  "PJOK": [],
+  "Biologi": [],
+  "Pendidikan Agama": [],
+  "Informatika": [],
+  "PKn": [],
+  "Sejarah": [],
+  "Bahasa Inggris": [],
+  "Bimbingan Konseling": [],
+  "Geografi": [],
+  "Kimia": [],
+  "Fisika": [],
+  "Ekonomi": [],
+};
+const SUBJECTS = Object.keys(TUGAS_FILES);
+
+const FOLDER_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a1.5 1.5 0 0 1 1.5-1.5h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5Z"/></svg>`;
+const FILE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V19a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19V5A1.5 1.5 0 0 1 7 3.5Z"/><path d="M14 3.5V8h4"/></svg>`;
+
+// ================= TEMA ====================
+const root = document.documentElement;
+const themeBtn = document.getElementById('themeBtn');
+function applyTheme(mode){
+  root.setAttribute('data-theme', mode);
+  themeBtn.textContent = mode === 'light' ? '☀️' : '🌙';
+  try{ localStorage.setItem('kelas-theme', mode); }catch(e){}
+}
+(function initTheme(){
+  let saved = null;
+  try{ saved = localStorage.getItem('kelas-theme'); }catch(e){}
+  if(saved === 'light' || saved === 'dark'){ applyTheme(saved); }
+  else {
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(prefersLight ? 'light' : 'dark');
+  }
+})();
+themeBtn.addEventListener('click', ()=>{
+  const current = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  applyTheme(current === 'light' ? 'dark' : 'light');
+});
+
+// ================= BACKGROUND VIDEO (isi sama kayak di index.html) =================
+const VIDEO_SRC_DARK = "https://fluently-find.github.io/X12/bg1.mp4";
+const VIDEO_SRC_LIGHT = "https://fluently-find.github.io/X12/bg.mp4";
+(function initBgVideo(){
+  if(!VIDEO_SRC_DARK && !VIDEO_SRC_LIGHT) return;
+  const video = document.getElementById('bgVideo');
+  const source = document.getElementById('bgVideoSource');
+  const overlay = document.getElementById('bgVideoOverlay');
+  video.muted = true;
+  video.style.display = 'block';
+  overlay.style.display = 'block';
+  function srcForTheme(){
+    const mode = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    return mode === 'light' ? (VIDEO_SRC_LIGHT || VIDEO_SRC_DARK) : (VIDEO_SRC_DARK || VIDEO_SRC_LIGHT);
+  }
+  function loadForTheme(){
+    const want = srcForTheme();
+    if(!want || source.src === want) return;
+    source.src = want; video.load();
+    video.play().catch(()=>{});
+  }
+  loadForTheme();
+  new MutationObserver(loadForTheme).observe(root, { attributes:true, attributeFilter:['data-theme'] });
+})();
+
+// ================= FOLDER GRID =================
+let searchTerm = "";
+
+function renderFolders(){
+  const grid = document.getElementById('folderGrid');
+  const subjects = SUBJECTS.filter(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
+  if(subjects.length === 0){
+    grid.innerHTML = `<div class="folder-empty">Tidak ada mapel yang cocok.</div>`;
+    return;
+  }
+  grid.innerHTML = subjects.map(subj=>{
+    const count = (TUGAS_FILES[subj] || []).length;
+    return `
+      <div class="folder-card glass" data-subject="${subj}">
+        <div class="folder-ico">${FOLDER_ICON}</div>
+        <div>
+          <div class="folder-name">${subj}</div>
+          <div class="folder-count">${count} file</div>
+        </div>
+      </div>`;
+  }).join("");
+  grid.querySelectorAll('.folder-card').forEach(el=>{
+    el.addEventListener('click', ()=> openSubject(el.getAttribute('data-subject')));
+  });
+}
+
+function openSubject(subject){
+  document.getElementById('folderView').classList.add('hidden');
+  document.getElementById('fileView').classList.remove('hidden');
+  document.getElementById('subjectTitle').textContent = subject;
+
+  const list = document.getElementById('fileList');
+  const files = TUGAS_FILES[subject] || [];
+  if(files.length === 0){
+    list.innerHTML = `<div class="file-empty">Belum ada file untuk ${subject}.<br>Tambahin di TUGAS_FILES di kode.</div>`;
+    return;
+  }
+  list.innerHTML = files.map(f => `
+    <a class="file-item glass" href="${f.link}" target="_blank" rel="noopener">
+      <span class="ico">${FILE_ICON}</span>
+      <span class="tx"><div class="t1">${f.judul}</div><div class="t2">${subject}</div></span>
+      <span class="chev">↗</span>
+    </a>`).join("");
+}
+
+document.getElementById('backToFolders').addEventListener('click', ()=>{
+  document.getElementById('fileView').classList.add('hidden');
+  document.getElementById('folderView').classList.remove('hidden');
+});
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
+  renderFolders();
+});
+
+renderFolders();
+</script>
+</body>
+</html>
